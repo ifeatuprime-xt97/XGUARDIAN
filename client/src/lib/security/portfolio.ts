@@ -52,7 +52,10 @@ export function loadPortfolio(storage?: StorageLike): WalletPortfolio {
     if (!raw) return emptyPortfolio();
     const parsed = JSON.parse(raw) as WalletPortfolio;
     if (!Array.isArray(parsed.wallets)) return emptyPortfolio();
-    const wallets = parsed.wallets.filter((wallet): wallet is ManagedWallet => Boolean(wallet && typeof wallet.address === "string" && typeof wallet.label === "string" && (wallet.kind === "connected" || wallet.kind === "watch") && isAddress(wallet.address))).map((wallet) => ({ ...wallet, address: getAddress(wallet.address), id: stableWalletId(wallet.address) }));
+    // Fix 6: Connected wallets are downgraded to "watch" on load — they have not
+    // re-authorized in this session yet. The wallet event listener in Home.tsx
+    // will upgrade them back to "connected" once the user connects.
+    const wallets = parsed.wallets.filter((wallet): wallet is ManagedWallet => Boolean(wallet && typeof wallet.address === "string" && typeof wallet.label === "string" && (wallet.kind === "connected" || wallet.kind === "watch") && isAddress(wallet.address))).map((wallet) => ({ ...wallet, address: getAddress(wallet.address), id: stableWalletId(wallet.address), kind: "watch" as const }));
     return { wallets, activeWalletId: wallets.some((wallet) => wallet.id === parsed.activeWalletId) ? parsed.activeWalletId : wallets[0]?.id };
   } catch {
     return emptyPortfolio();

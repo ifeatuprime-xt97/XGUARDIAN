@@ -52,7 +52,8 @@ export function createConfiguredTraceProvider(config: XLayerRuntimeConfig): Trac
         if (!Array.isArray(trace)) return { providerId: "configured-xlayer-trace", status: "unavailable", detail: "The configured endpoint did not return the documented trace_transaction result. No trace-backed token delta is claimed.", deltas: [] };
         const { receipt, assets } = await transferAssetsFromReceipt(rpc, transactionHash, walletAddress);
         if (!assets.length) return { providerId: "configured-xlayer-trace", status: "complete", detail: "The trace endpoint completed and the receipt contained no wallet-attributed standard ERC-20 Transfer assets.", deltas: [] };
-        const previousBlock = receipt.blockNumber > 0n ? receipt.blockNumber - 1n : 0n;
+        // Fix 10: Guard against underflow – genesis block has no prior block to read.
+        const previousBlock = receipt.blockNumber > 1n ? receipt.blockNumber - 1n : 0n;
         const results = await Promise.all(assets.map(async ({ asset, counterparty }) => {
           try {
             const [beforeRaw, afterRaw, decimalsRaw, symbolRaw] = await Promise.all([

@@ -71,6 +71,7 @@ import {
 import {
   connectWallet,
   connectedXLayerNetwork,
+  detectActiveProvider,
   ensureXLayerNetwork,
   getInjectedWallet,
   readWalletAccounts,
@@ -271,10 +272,12 @@ export default function Home() {
       setReviewHistory(loadReviewHistory(window.localStorage));
       setHistoryReady(true);
       try {
-        const state = await readWalletState();
+        // Fix 1: detect which provider already has accounts (survives page refresh)
+        const detectedProvider = await detectActiveProvider();
+        const state = await readWalletState(detectedProvider);
         setWallet(state);
         if (state.connected)
-          addConnectedAccounts(await readWalletAccounts(), state.address);
+          addConnectedAccounts(await readWalletAccounts(detectedProvider), state.address);
       } catch {
         setWallet({
           available: false,
@@ -469,6 +472,24 @@ export default function Home() {
             }
           : movement
       );
+      // Fix 4: patch decoded.amount and decoded.summary with real token decimals
+      // so the intent comparison and analysis header show the correct value.
+      const patchedDecoded = erc20Evidence && decoded.amountRaw
+        ? (() => {
+            const correctedAmount = formatDecodedAmount(
+              decoded.amountRaw,
+              erc20Evidence.decimals,
+              decoded.amount ?? ""
+            );
+            return {
+              ...decoded,
+              amount: correctedAmount,
+              summary: decoded.amount
+                ? decoded.summary.replace(decoded.amount, correctedAmount)
+                : decoded.summary,
+            };
+          })()
+        : decoded;
       const assetComparison = createLiveAssetComparison(
         before,
         movements,
@@ -487,7 +508,7 @@ export default function Home() {
       };
       const nextAnalysis = {
         draft,
-        decoded,
+        decoded: patchedDecoded,
         simulation,
         reputation,
         risk: evaluateRisk({

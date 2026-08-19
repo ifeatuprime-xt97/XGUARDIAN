@@ -29,8 +29,13 @@ export interface ChainProvider {
 
 export type ChainProviderFactory = (config: XLayerRuntimeConfig) => ChainProvider;
 
+// Fix 3: Cache clients per RPC URL to prevent a new client instance (and HTTP connection) on every call.
+const _clientCache = new Map<string, ReturnType<typeof createPublicClient>>();
 function rpcClient(network: XLayerNetwork) {
-  return createPublicClient({ transport: http(network.rpcUrl, { timeout: 12_000 }) });
+  if (!_clientCache.has(network.rpcUrl)) {
+    _clientCache.set(network.rpcUrl, createPublicClient({ transport: http(network.rpcUrl, { timeout: 12_000 }) }));
+  }
+  return _clientCache.get(network.rpcUrl)!;
 }
 
 export function createViemRpcProvider(): ChainProvider {

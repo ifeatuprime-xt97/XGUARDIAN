@@ -11,7 +11,8 @@ function isRecord(value: unknown): value is ReviewHistoryRecord {
   return typeof item.id === "string" && typeof item.createdAt === "number" && (item.source === "live" || item.source === "demo") && typeof item.chainId === "number" && typeof item.method === "string" && typeof item.consequence === "string" && (item.riskLevel === "safe" || item.riskLevel === "warning" || item.riskLevel === "critical") && (item.verification === "not-verified" || item.verification === "pending" || item.verification === "verified" || item.verification === "failed");
 }
 
-export function createReviewHistoryRecord(analysis: TransactionAnalysis, source: ReviewHistoryRecord["source"], id = `review:${Date.now()}`, createdAt = Date.now()): ReviewHistoryRecord {
+// Fix 8: Use crypto.randomUUID() to prevent ID collisions on rapid double-clicks.
+export function createReviewHistoryRecord(analysis: TransactionAnalysis, source: ReviewHistoryRecord["source"], id = `review:${crypto.randomUUID()}`, createdAt = Date.now()): ReviewHistoryRecord {
   const movement = analysis.movements[0];
   const consequence = movement ? `${movement.direction === "approval" ? "Permission" : movement.direction === "out" ? "Send" : "Receive"} ${movement.amount} ${movement.symbol}` : analysis.decoded.method;
   return { id, createdAt, source, walletAddress: analysis.draft.from, chainId: analysis.draft.chainId, method: analysis.decoded.method, consequence, riskLevel: analysis.risk.level, verification: analysis.verification.status, transactionHash: analysis.verification.transactionHash };
