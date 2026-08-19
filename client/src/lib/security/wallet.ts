@@ -22,18 +22,25 @@ export function getInjectedWallet(): Eip1193Provider | undefined {
   return okxProvider ?? window.ethereum ?? window.okxwallet;
 }
 
+/** Tracks whichever provider successfully connected, so all subsequent calls use the same one. */
+let activeProvider: Eip1193Provider | undefined;
+
+export function getActiveProvider(): Eip1193Provider | undefined {
+  return activeProvider ?? getInjectedWallet();
+}
+
 function providerLabel(provider: Eip1193Provider) {
   if ("isOkxWallet" in provider || "isOKExWallet" in provider) return "OKX Wallet";
   return provider.isMetaMask ? "MetaMask" : "EIP-1193 wallet";
 }
 
-export async function readWalletAccounts(provider = getInjectedWallet()): Promise<string[]> {
+export async function readWalletAccounts(provider = getActiveProvider()): Promise<string[]> {
   if (!provider) return [];
   const accountsResult = await provider.request({ method: "eth_accounts" });
   return Array.isArray(accountsResult) ? accountsResult.filter((account): account is string => typeof account === "string") : [];
 }
 
-export async function readWalletState(provider = getInjectedWallet()): Promise<WalletState> {
+export async function readWalletState(provider = getActiveProvider()): Promise<WalletState> {
   if (!provider) return { available: false, connected: false, providerLabel: "No wallet provider detected in this browser" };
   const [accounts, chainResult] = await Promise.all([
     readWalletAccounts(provider),
@@ -78,17 +85,21 @@ function getAllProviders(): Eip1193Provider[] {
 export async function connectWallet(provider = getInjectedWallet()): Promise<WalletState> {
   if (!provider) throw new Error("No wallet provider was detected. Use MetaMask/OKX Wallet on desktop, or open this site inside a wallet app browser.");
 
+  const tryConnect = async (p: Eip1193Provider): Promise<WalletState> => {
+    await p.request({ method: "eth_requestAccounts" });
+    activeProvider = p; // remember the one that worked
+    return readWalletState(p);
+  };
+
   try {
-    await provider.request({ method: "eth_requestAccounts" });
-    return readWalletState(provider);
+    return await tryConnect(provider);
   } catch (error) {
     // If the preferred provider (often OKX) can't find accounts, try others.
     if (isProviderUnavailableError(error)) {
       const allProviders = getAllProviders().filter(p => p !== provider);
       for (const fallback of allProviders) {
         try {
-          await fallback.request({ method: "eth_requestAccounts" });
-          return readWalletState(fallback);
+          return await tryConnect(fallback);
         } catch (fallbackError) {
           if (!isProviderUnavailableError(fallbackError)) throw fallbackError;
         }
@@ -100,7 +111,7 @@ export async function connectWallet(provider = getInjectedWallet()): Promise<Wal
   }
 }
 
-export async function ensureXLayerNetwork(network: XLayerNetwork, provider = getInjectedWallet()) {
+export async function ensureXLayerNetwork(network: XLayerNetwork, provider = getActiveProvider()) {
   if (!provider) throw new Error("No EIP-1193 wallet was detected.");
   const desiredChainId = toChainHex(network.chainId);
   try {
@@ -112,7 +123,7 @@ export async function ensureXLayerNetwork(network: XLayerNetwork, provider = get
   }
 }
 
-export async function submitThroughWallet(transaction: { from: string; to: string; value: string; data: string }, provider = getInjectedWallet()) {
+export async function submitThroughWallet(transaction: { from: string; to: string; value: string; data: string }, provider = getActiveProvider()) {
   if (!provider) throw new Error("No EIP-1193 wallet was detected.");
   const hash = await provider.request({
     method: "eth_sendTransaction",
