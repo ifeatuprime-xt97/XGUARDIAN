@@ -157,6 +157,18 @@ export type GuardianAiExplanation = {
   source: "ai" | "deterministic-fallback";
 };
 
+export type GuardianAiRemediation = {
+  headline: string;
+  advice: string[];
+  safeAlternative?: string;
+};
+
+export type GuardianAiPortfolioInsights = {
+  headline: string;
+  summary: string;
+  riskPatterns: string[];
+};
+
 export type VerificationDiffStatus = "not-ready" | "matched" | "mismatch" | "partial" | "failed";
 
 export type VerificationDiffItem = {

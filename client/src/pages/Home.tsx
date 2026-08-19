@@ -90,6 +90,8 @@ import type {
   WalletState,
   XLayerNetworkKey,
   GuardianAiExplanation,
+  GuardianAiRemediation,
+  GuardianAiPortfolioInsights,
 } from "@/lib/security/types";
 
 const initialScenario =
@@ -197,6 +199,8 @@ export default function Home() {
     useState<ReviewHistoryFilter>("all");
   const [latestReviewId, setLatestReviewId] = useState<string>();
   const [demoAiExplanation, setDemoAiExplanation] = useState<GuardianAiExplanation>();
+  const [demoRemediation, setDemoRemediation] = useState<GuardianAiRemediation>();
+  const [demoInsights, setDemoInsights] = useState<GuardianAiPortfolioInsights>();
 
   useEffect(() => {
     if (notice) {
@@ -232,6 +236,8 @@ export default function Home() {
   const activeCanSign = canRequestSignature(activeWallet, wallet);
   const signingReady = canOpenWalletConfirmation(analysis);
   const explanation = trpc.guardian.explain.useMutation();
+  const remediation = trpc.guardian.remediate.useMutation();
+  const insights = trpc.guardian.portfolioInsights.useMutation();
   const tokenTarget =
     analysis &&
     ["erc20-approval", "erc20-transfer", "erc20-transfer-from"].includes(
@@ -742,6 +748,54 @@ export default function Home() {
       }
     );
   };
+  const requestRemediation = () => {
+    if (!analysis) return;
+    if (mode === "demo") {
+      setDemoRemediation({
+        headline: "Demo Remediation Suggestion",
+        advice: ["Consider sending a smaller test amount first.", "Verify the recipient address through an out-of-band channel."],
+        safeAlternative: "Reject this transaction and manually draft a native transfer directly from your wallet interface."
+      });
+      return;
+    }
+    remediation.mutate(
+      {
+        intent: analysis.draft.declaredAction || "No stated intent was supplied.",
+        actual: analysis.decoded.summary,
+        network: analysisNetwork.name,
+        simulation: {
+          status: analysis.simulation.status,
+          detail: analysis.simulation.detail,
+          gasEstimate: analysis.simulation.gasEstimate,
+        },
+        findings: analysis.risk.findings.map(finding => ({
+          title: finding.title,
+          detail: finding.detail,
+          level: finding.level,
+        })),
+        movements: analysis.movements.map(movement => ({
+          symbol: movement.symbol,
+          amount: movement.amount,
+          direction: movement.direction,
+          detail: movement.detail,
+        })),
+      },
+      { onError: () => setError("Failed to fetch remediation.") }
+    );
+  };
+  const requestInsights = () => {
+    if (mode === "demo") {
+      setDemoInsights({
+        headline: "Portfolio Security Overview",
+        summary: "This is a simulated analysis based on your demo interaction history.",
+        riskPatterns: ["No high-risk transactions detected.", "Consistent use of deterministic scanning before approval."]
+      });
+      return;
+    }
+    insights.mutate(reviewHistory, {
+      onError: () => setError("Failed to fetch portfolio insights.")
+    });
+  };
   const recover = () => {
     setMode("live");
     navigate("scan");
@@ -898,7 +952,41 @@ export default function Home() {
                 </strong>
                 <small>From selected review</small>
               </div>
+              <div className="portfolio-stat" style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <span>Security Insights</span>
+                <button onClick={requestInsights} disabled={insights.isPending} style={{ marginTop: "8px", background: "var(--accent)", color: "var(--accent-text)", borderRadius: "12px", padding: "6px 10px", fontSize: "11px", fontWeight: "600", border: "none", cursor: "pointer" }}>
+                  {insights.isPending ? "Generating..." : "Generate Portfolio Insights"}
+                </button>
+              </div>
             </section>
+            {(mode === "demo" ? demoInsights : insights.data) && (
+              <section className="ai-explanation" style={{ marginBottom: "12px" }}>
+                <header>
+                  <div>
+                    <span><Bot size={16} aria-hidden="true" /> Portfolio Security Insights</span>
+                    <small>AI-generated analysis of your transaction history</small>
+                  </div>
+                </header>
+                <div className="ai-copy">
+                  <strong>{(mode === "demo" ? demoInsights! : insights.data!).headline}</strong>
+                  <p>{(mode === "demo" ? demoInsights! : insights.data!).summary}</p>
+                  <ul>
+                    {(mode === "demo" ? demoInsights! : insights.data!).riskPatterns.map((pattern, i) => (
+                      <li key={i}><Sparkles size={12} className="ai-sparkle" /> <span>{pattern}</span></li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            )}
+            {insights.isPending && !demoInsights && (
+              <section className="ai-explanation" style={{ marginBottom: "12px" }}>
+                <div className="ai-copy ai-loading">
+                  <div className="skeleton-title"></div>
+                  <div className="skeleton-text"></div>
+                  <div className="skeleton-text"></div>
+                </div>
+              </section>
+            )}
             <section className="overview-row">
               <div className="case-strip">
                 <div>
@@ -932,6 +1020,9 @@ export default function Home() {
                   aiExplanation={mode === "demo" ? demoAiExplanation : explanation.data}
                   isExplaining={explanation.isPending}
                   onExplain={requestExplanation}
+                  remediation={mode === "demo" ? demoRemediation : remediation.data}
+                  isRemediating={remediation.isPending}
+                  onRemediate={requestRemediation}
                   onRecover={recover}
                 />
                 {mode === "live" && (

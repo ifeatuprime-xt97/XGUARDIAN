@@ -26,6 +26,15 @@ export const appRouter = router({
       findings: z.array(z.object({ title: z.string().max(160), detail: z.string().max(500), level: z.string().max(20) })).max(8),
       movements: z.array(z.object({ symbol: z.string().max(30), amount: z.string().max(80), direction: z.string().max(30), detail: z.string().max(320) })).max(8),
     })).mutation(({ input }) => explainGuardianEvidence(input)),
+    remediate: publicProcedure.input(z.object({
+      intent: z.string().max(320),
+      actual: z.string().max(700),
+      network: z.string().max(120),
+      simulation: z.object({ status: z.string().max(40), detail: z.string().max(700), gasEstimate: z.string().max(80).optional() }),
+      findings: z.array(z.object({ title: z.string().max(160), detail: z.string().max(500), level: z.string().max(20) })).max(8),
+      movements: z.array(z.object({ symbol: z.string().max(30), amount: z.string().max(80), direction: z.string().max(30), detail: z.string().max(320) })).max(8),
+    })).mutation(({ input }) => generateRemediation(input)),
+    portfolioInsights: publicProcedure.input(z.array(z.any())).mutation(({ input }) => generatePortfolioInsights(input)),
     tokenIdentity: publicProcedure.input(z.object({ chainId: z.number().int(), address: z.string().regex(/^0x[a-fA-F0-9]{40}$/) })).query(({ input }) => getXLayerTokenIdentity(input.chainId, input.address)),
   }),
 
@@ -40,4 +49,5 @@ export const appRouter = router({
 export type AppRouter = typeof appRouter;
 import { z } from "zod";
 import { explainGuardianEvidence } from "./guardianExplanation";
+import { generateRemediation, generatePortfolioInsights } from "./guardianAdvancedAi";
 import { getXLayerTokenIdentity } from "./xlayerTokenIdentity";
