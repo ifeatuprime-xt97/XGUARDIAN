@@ -9,6 +9,10 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 
+if (!process.env.NODE_ENV && process.env.npm_lifecycle_event === "dev") {
+  process.env.NODE_ENV = "development";
+}
+
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
     const server = net.createServer();

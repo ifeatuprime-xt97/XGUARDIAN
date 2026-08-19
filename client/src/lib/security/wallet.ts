@@ -3,12 +3,28 @@ import type { Eip1193Provider, WalletState, XLayerNetwork } from "./types";
 
 declare global {
   interface Window {
-    ethereum?: Eip1193Provider;
+    ethereum?: Eip1193Provider & {
+      providers?: Eip1193Provider[];
+      isOkxWallet?: boolean;
+      isOKExWallet?: boolean;
+    };
+    okxwallet?: Eip1193Provider & {
+      isOkxWallet?: boolean;
+      isOKExWallet?: boolean;
+    };
   }
 }
 
 export function getInjectedWallet(): Eip1193Provider | undefined {
-  return typeof window === "undefined" ? undefined : window.ethereum;
+  if (typeof window === "undefined") return undefined;
+  const providers = window.ethereum?.providers;
+  const okxProvider = providers?.find((provider) => "isOkxWallet" in provider || "isOKExWallet" in provider);
+  return okxProvider ?? window.ethereum ?? window.okxwallet;
+}
+
+function providerLabel(provider: Eip1193Provider) {
+  if ("isOkxWallet" in provider || "isOKExWallet" in provider) return "OKX Wallet";
+  return provider.isMetaMask ? "MetaMask" : "EIP-1193 wallet";
 }
 
 export async function readWalletAccounts(provider = getInjectedWallet()): Promise<string[]> {
@@ -18,7 +34,7 @@ export async function readWalletAccounts(provider = getInjectedWallet()): Promis
 }
 
 export async function readWalletState(provider = getInjectedWallet()): Promise<WalletState> {
-  if (!provider) return { available: false, connected: false, providerLabel: "No EIP-1193 wallet detected" };
+  if (!provider) return { available: false, connected: false, providerLabel: "No wallet provider detected in this browser" };
   const [accounts, chainResult] = await Promise.all([
     readWalletAccounts(provider),
     provider.request({ method: "eth_chainId" }),
@@ -29,12 +45,12 @@ export async function readWalletState(provider = getInjectedWallet()): Promise<W
     connected: Boolean(accounts[0]),
     address: accounts[0],
     chainId,
-    providerLabel: provider.isMetaMask ? "MetaMask" : "EIP-1193 wallet",
+    providerLabel: providerLabel(provider),
   };
 }
 
 export async function connectWallet(provider = getInjectedWallet()): Promise<WalletState> {
-  if (!provider) throw new Error("No EIP-1193 wallet was detected. Install or unlock MetaMask, then try again.");
+  if (!provider) throw new Error("No wallet provider was detected. Use MetaMask/OKX Wallet on desktop, or open this site inside a wallet app browser.");
   await provider.request({ method: "eth_requestAccounts" });
   return readWalletState(provider);
 }

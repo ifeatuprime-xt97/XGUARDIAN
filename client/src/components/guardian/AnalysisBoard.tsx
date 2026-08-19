@@ -5,7 +5,7 @@ import type { GuardianAiExplanation, RiskLevel, TransactionAnalysis } from "@/li
 import type { TokenIdentity } from "@shared/tokenIdentity";
 type Props = { analysis: TransactionAnalysis; mode: "demo" | "live"; networkName: string; tokenIdentity?: TokenIdentity; aiExplanation?: GuardianAiExplanation; isExplaining?: boolean; onExplain?: () => void; onRecover?: () => void };
 const profile: Record<RiskLevel, { label: string; message: string; action: string }> = {
-  safe: { label: "Clear", message: "No deterministic danger was found before signing.", action: "Review the destination" },
+  safe: { label: "Clear", message: "No critical deterministic finding was found before signing.", action: "Review the destination" },
   warning: { label: "Review", message: "This request needs a deliberate check before signing.", action: "Pause and verify" },
   critical: { label: "Blocked", message: "Guardian found a permission or intent mismatch.", action: "Reject this request" },
 };

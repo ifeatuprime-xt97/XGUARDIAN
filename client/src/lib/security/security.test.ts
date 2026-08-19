@@ -3,7 +3,7 @@ import { clearRegisteredChainProvider, createChainProvider, registerChainProvide
 import { createLiveAssetComparison, decodedAssetMovements } from "./assetComparison";
 import { createConfiguredTraceProvider } from "./traceProvider";
 import { getXLayerRuntimeConfig, OFFICIAL_XLAYER_NETWORKS, toChainHex } from "./config";
-import { calldataForAddress, calldataForUint, createSelectorRegistry, decodeTransaction, ERC20_APPROVE_SELECTOR, ERC20_TRANSFER_SELECTOR, MAX_UINT256 } from "./decoder";
+import { calldataForAddress, calldataForUint, createSelectorRegistry, decodeTransaction, ERC20_APPROVE_SELECTOR, ERC20_TRANSFER_SELECTOR, MAX_UINT256, TOKEN_APPROVAL_FOR_ALL_SELECTOR } from "./decoder";
 import { DEMO_SCENARIOS } from "./demo";
 import { evaluateRisk } from "./risk";
 import { readXLayerErc20Evidence, readXLayerReceiptTokenDeltas, simulateOnXLayer, verifyXLayerReceipt } from "./simulation";
@@ -62,6 +62,31 @@ describe("risk engine and demo contracts", () => {
     });
     expect(report.level).toBe("critical");
     expect(report.findings.some((finding) => finding.id === "unlimited-approval")).toBe(true);
+  });
+
+  it("escalates collection-wide operator approvals to critical", () => {
+    const decoded = decodeTransaction({ to: account, value: "0", data: `${TOKEN_APPROVAL_FOR_ALL_SELECTOR}${calldataForAddress(recipient)}${calldataForUint(1n)}`, chainId: 1952 });
+    const report = evaluateRisk({
+      draft: { to: account, value: "0", data: "0x", chainId: 1952 },
+      decoded,
+      simulation: { status: "success", title: "OK", detail: "OK" },
+      reputation: { status: "unknown", provider: "test", detail: "unknown" },
+    });
+    expect(report.level).toBe("critical");
+    expect(report.findings.some((finding) => finding.id === "operator-approval")).toBe(true);
+  });
+
+  it("uses live token decimals when scoring bounded approvals", () => {
+    const decoded = decodeTransaction({ to: account, value: "0", data: `${ERC20_APPROVE_SELECTOR}${calldataForAddress(recipient)}${calldataForUint(2_000_000_000n)}`, chainId: 1952 });
+    const report = evaluateRisk({
+      draft: { to: account, value: "0", data: "0x", chainId: 1952 },
+      decoded,
+      simulation: { status: "success", title: "OK", detail: "OK" },
+      reputation: { status: "unknown", provider: "test", detail: "unknown" },
+      erc20Evidence: { tokenAddress: account, symbol: "USDT", decimals: 6, ownerAddress: account, balance: "10", detail: "Test token evidence" },
+    });
+    expect(report.level).toBe("warning");
+    expect(report.findings.some((finding) => finding.id === "large-approval")).toBe(true);
   });
 
   it("defines six complete demo scenarios", () => {

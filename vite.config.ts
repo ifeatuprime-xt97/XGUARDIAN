@@ -75,11 +75,17 @@ function writeToLogFile(source: LogSource, entries: unknown[]) {
  * - Auto-trimmed when exceeding 1MB (keeps newest entries)
  */
 function vitePluginManusDebugCollector(): Plugin {
+  let isDevServer = false;
+
   return {
     name: "manus-debug-collector",
 
+    configResolved(config) {
+      isDevServer = config.command === "serve";
+    },
+
     transformIndexHtml(html) {
-      if (process.env.NODE_ENV === "production") {
+      if (!isDevServer) {
         return html;
       }
       return {
@@ -150,10 +156,18 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
-
-export default defineConfig({
-  plugins,
+export default defineConfig(({ command }) => ({
+  plugins: [
+    tailwindcss(),
+    ...(command === "serve"
+      ? [
+          react(),
+          jsxLocPlugin(),
+          vitePluginManusRuntime(),
+          vitePluginManusDebugCollector(),
+        ]
+      : []),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -167,6 +181,9 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+  },
+  esbuild: {
+    jsxDev: false,
   },
   server: {
     host: true,
@@ -184,4 +201,4 @@ export default defineConfig({
       deny: ["**/.*"],
     },
   },
-});
+}));
