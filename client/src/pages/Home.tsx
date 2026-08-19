@@ -19,7 +19,9 @@ import {
   ScanLine,
   ShieldAlert,
   ShieldCheck,
+  Trash,
   Trash2,
+  TriangleAlert,
   UserRound,
   Wallet,
   WalletCards,
@@ -330,13 +332,26 @@ export default function Home() {
     if (historyReady) saveReviewHistory(reviewHistory, window.localStorage);
   }, [reviewHistory, historyReady]);
   const recordReview = (
-    nextAnalysis: TransactionAnalysis,
-    source: "demo" | "live"
+    analysis: TransactionAnalysis,
+    source: ReviewHistoryRecord["source"]
   ) => {
-    const record = createReviewHistoryRecord(nextAnalysis, source);
-    setReviewHistory(current => prependReviewHistory(current, record));
+    const record = createReviewHistoryRecord(analysis, source);
+    setReviewHistory(prev => {
+      const next = prependReviewHistory(prev, record);
+      saveReviewHistory(next, window.localStorage);
+      return next;
+    });
     setLatestReviewId(record.id);
   };
+
+  const deleteReview = (id: string) => {
+    setReviewHistory(prev => {
+      const next = prev.filter(record => record.id !== id);
+      saveReviewHistory(next, window.localStorage);
+      return next;
+    });
+  };
+
   const selectScenario = (id: ScenarioId) => {
     const nextScenario = DEMO_SCENARIOS.find(item => item.id === id);
     if (nextScenario) recordReview(nextScenario.analysis, "demo");
@@ -1154,6 +1169,13 @@ export default function Home() {
                     <div className={`history-risk risk-${item.riskLevel}`}>
                       {item.riskLevel}
                     </div>
+                    <button
+                      className="history-delete-btn"
+                      onClick={() => deleteReview(item.id)}
+                      aria-label="Delete review"
+                    >
+                      <Trash size={15} />
+                    </button>
                   </article>
                 ))}
               </div>
