@@ -173,10 +173,10 @@ function vitePluginCopyBuildAssets(): Plugin {
 export default defineConfig(({ command }) => ({
   plugins: [
     tailwindcss(),
+    react(),
     ...(command === "build" ? [vitePluginCopyBuildAssets()] : []),
     ...(command === "serve"
       ? [
-          react(),
           jsxLocPlugin(),
           vitePluginManusRuntime(),
           vitePluginManusDebugCollector(),
