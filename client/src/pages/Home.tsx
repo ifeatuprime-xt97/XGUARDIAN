@@ -89,6 +89,7 @@ import type {
   WalletPortfolio,
   WalletState,
   XLayerNetworkKey,
+  GuardianAiExplanation,
 } from "@/lib/security/types";
 
 const initialScenario =
@@ -195,6 +196,21 @@ export default function Home() {
   const [historyFilter, setHistoryFilter] =
     useState<ReviewHistoryFilter>("all");
   const [latestReviewId, setLatestReviewId] = useState<string>();
+  const [demoAiExplanation, setDemoAiExplanation] = useState<GuardianAiExplanation>();
+
+  useEffect(() => {
+    if (notice) {
+      const timer = setTimeout(() => setNotice(undefined), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [notice]);
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(undefined), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
   const scenario = useMemo(
     () =>
       DEMO_SCENARIOS.find(item => item.id === selectedId) ?? DEMO_SCENARIOS[0],
@@ -370,6 +386,7 @@ export default function Home() {
       addConnectedAccounts(await readWalletAccounts(), state.address);
       setMode("live");
       setSection("scan");
+      setSelectedNetwork("mainnet");
       setNotice(
         "Browser wallet connected. Guardian has not requested a signature."
       );
@@ -685,6 +702,15 @@ export default function Home() {
   };
   const requestExplanation = () => {
     if (!analysis) return;
+    if (mode === "demo") {
+      setDemoAiExplanation({
+        headline: "Demo AI Explanation",
+        explanation: "This is a simulated AI explanation for demo mode. In a live environment, this would summarize the decoded contract call and expected asset movements based on your configured AI provider.",
+        questions: ["What happens if I sign this?", "Are there any hidden approvals?"],
+        source: "ai"
+      });
+      return;
+    }
     explanation.mutate(
       {
         intent:
@@ -903,7 +929,7 @@ export default function Home() {
                   mode={mode}
                   networkName={analysisNetwork.name}
                   tokenIdentity={tokenIdentity.data}
-                  aiExplanation={explanation.data}
+                  aiExplanation={mode === "demo" ? demoAiExplanation : explanation.data}
                   isExplaining={explanation.isPending}
                   onExplain={requestExplanation}
                   onRecover={recover}
@@ -1083,12 +1109,14 @@ export default function Home() {
               </p>
             </header>
             <div className="network-tabs">
-              <button
-                className={selectedNetwork === "testnet" ? "active" : ""}
-                onClick={() => setSelectedNetwork("testnet")}
-              >
-                Testnet
-              </button>
+              {!wallet.connected && (
+                <button
+                  className={selectedNetwork === "testnet" ? "active" : ""}
+                  onClick={() => setSelectedNetwork("testnet")}
+                >
+                  Testnet
+                </button>
+              )}
               <button
                 className={selectedNetwork === "mainnet" ? "active" : ""}
                 onClick={() => setSelectedNetwork("mainnet")}
