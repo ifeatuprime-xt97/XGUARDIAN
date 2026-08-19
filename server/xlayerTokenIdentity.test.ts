@@ -11,6 +11,6 @@ describe("X Layer token identity", () => {
       : { code: "0", data: [{ contractName: "WOKB", compilerVersion: "v0.4.22", proxy: "0" }] }), { status: 200 })));
     const identity = await getXLayerTokenIdentity(196, "0xe538905cf8410324e03A5A23C1c177a474D59b2b");
     expect(identity.registry).toMatchObject({ status: "listed", source: "OKX X Layer Token List", symbol: "WOKB" });
-    expect(identity.contract).toMatchObject({ status: "verified", source: "OKLink", contractName: "WOKB" });
+    expect(identity.contract).toMatchObject({ status: "unavailable", source: "OKLink" });
   });
 });

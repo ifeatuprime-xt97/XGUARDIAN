@@ -3,6 +3,9 @@
   "framework": "vite",
   "buildCommand": "pnpm install --frozen-lockfile && pnpm build",
   "outputDirectory": "dist/public",
+  "env": {
+    "OKLINK_API_KEY": "@oklink_api_key"
+  },
   "rewrites": [
     {
       "source": "/api/trpc/(.*)",

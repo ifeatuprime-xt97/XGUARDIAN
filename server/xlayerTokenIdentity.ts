@@ -42,13 +42,10 @@ export async function getXLayerTokenIdentity(chainId: number, address: string): 
     identity.registry = { status: "unavailable" };
   }
   try {
-    const url = new URL(OKLINK_CONTRACT_URL);
-    url.searchParams.set("chainShortName", "XLAYER");
-    url.searchParams.set("contractAddress", address);
-    const payload = await json(url.toString()) as { code?: string; data?: Array<{ contractName?: string; compilerVersion?: string; proxy?: string }> };
-    const record = payload.code === "0" ? payload.data?.[0] : undefined;
-    identity.contract = record ? { status: "verified", source: "OKLink", contractName: record.contractName, compilerVersion: record.compilerVersion, proxy: record.proxy === "1", detail: "OKLink returned verified contract source information for this exact X Layer address." } : { status: "not-verified", source: "OKLink", detail: "OKLink returned no verified contract source record for this exact X Layer address." };
-  } catch {
+    // OKLink API is currently bypassed as the service is down.
+    identity.contract = { status: "unavailable", source: "OKLink", detail: "OKLink verified-contract information is currently unavailable." };
+  } catch (error) {
+    console.warn("[TokenIdentity] OKLink bypass error:", error);
     identity.contract = { status: "unavailable", source: "OKLink", detail: "OKLink verified-contract information could not be retrieved. This is not a safety verdict." };
   }
   return identity;

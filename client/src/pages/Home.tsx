@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { AnalysisBoard } from "@/components/guardian/AnalysisBoard";
 import { WalletPicker } from "@/components/guardian/WalletPicker";
+import { ScanForm } from "@/components/guardian/ScanForm";
 import { trpc } from "@/lib/trpc";
 import {
   createLiveAssetComparison,
@@ -178,9 +179,9 @@ export default function Home() {
   const [error, setError] = useState<string>();
   const [selectedNetwork, setSelectedNetwork] =
     useState<XLayerNetworkKey>("testnet");
-  const [intentKind, setIntentKind] = useState("Send tokens");
+  const [lastIntent, setLastIntent] = useState("Send tokens");
   const [liveAnalysis, setLiveAnalysis] = useState<TransactionAnalysis>();
-  const [liveDraft, setLiveDraft] = useState({
+  const [lastDraft, setLastDraft] = useState({
     to: "",
     value: "0",
     data: "0x",
@@ -392,7 +393,9 @@ export default function Home() {
       );
     }
   };
-  const inspect = async () => {
+  const inspect = async (liveDraft: {to: string; value: string; data: string; declaredAction: string}, intentKind: string) => {
+    setLastDraft(liveDraft);
+    setLastIntent(intentKind);
     if (!activeAddress) {
       setError(
         "Connect a signing wallet or add a watch wallet before scanning."
@@ -1063,95 +1066,14 @@ export default function Home() {
                 </button>
               )}
             </div>
-            <div className="intent-picker">
-              <span>What do you intend to do?</span>
-              <div>
-                {["Send tokens", "Approve tokens", "Swap", "Contract call"].map(
-                  option => (
-                    <button
-                      key={option}
-                      className={intentKind === option ? "active" : ""}
-                      onClick={() => setIntentKind(option)}
-                    >
-                      {option}
-                    </button>
-                  )
-                )}
-              </div>
-            </div>
-            <div className="night-fields">
-              <label>
-                Destination
-                <input
-                  value={liveDraft.to}
-                  onChange={event =>
-                    setLiveDraft(draft => ({
-                      ...draft,
-                      to: event.target.value,
-                    }))
-                  }
-                  placeholder="0x… contract or recipient"
-                />
-              </label>
-              <label>
-                Value / OKB
-                <input
-                  value={liveDraft.value}
-                  onChange={event =>
-                    setLiveDraft(draft => ({
-                      ...draft,
-                      value: event.target.value,
-                    }))
-                  }
-                  inputMode="decimal"
-                />
-              </label>
-              <label className="wide">
-                Calldata
-                <textarea
-                  value={liveDraft.data}
-                  onChange={event =>
-                    setLiveDraft(draft => ({
-                      ...draft,
-                      data: event.target.value,
-                    }))
-                  }
-                  placeholder="0x or encoded calldata"
-                />
-              </label>
-              <label className="wide">
-                Claimed intent <small>optional detail</small>
-                <input
-                  value={liveDraft.declaredAction}
-                  onChange={event =>
-                    setLiveDraft(draft => ({
-                      ...draft,
-                      declaredAction: event.target.value,
-                    }))
-                  }
-                  placeholder={`Example: ${intentKind.toLowerCase()}`}
-                />
-              </label>
-            </div>
-            <footer>
-              <span>
-                <LockKeyhole size={14} />{" "}
-                {activeWallet?.kind === "watch"
-                  ? "Watch wallets never sign."
-                  : "Guardian never signs."}
-              </span>
-              <button
-                onClick={inspect}
-                disabled={!activeAddress || isInspecting}
-              >
-                {isInspecting ? (
-                  <LoaderCircle className="spin" size={15} />
-                ) : (
-                  "Review request"
-                )}
-                <ArrowRight size={15} />
-              </button>
-            </footer>
+            <ScanForm
+              activeWallet={activeWallet}
+              activeAddress={activeAddress}
+              isInspecting={isInspecting}
+              onInspect={inspect}
+              initialDraft={lastDraft}
+              initialIntent={lastIntent}
+            />
           </section>
         )}
         {section === "activity" && (
