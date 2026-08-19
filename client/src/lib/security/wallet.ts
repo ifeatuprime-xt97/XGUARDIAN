@@ -49,10 +49,55 @@ export async function readWalletState(provider = getInjectedWallet()): Promise<W
   };
 }
 
+function isProviderUnavailableError(error: unknown): boolean {
+  // OKX Wallet throws "Unable to find any account for <chainId>" when it's
+  // installed but not set up, or when no accounts are available for the chain.
+  if (typeof error === "object" && error !== null && "message" in error) {
+    const msg = String((error as { message?: unknown }).message).toLowerCase();
+    if (msg.includes("unable to find any account")) return true;
+    if (msg.includes("user rejected")) return false; // user explicitly cancelled – don't retry
+  }
+  return false;
+}
+
+/** Returns all available EIP-1193 providers in the page, preferred first. */
+function getAllProviders(): Eip1193Provider[] {
+  if (typeof window === "undefined") return [];
+  const providers: Eip1193Provider[] = [];
+  if (window.ethereum?.providers?.length) {
+    providers.push(...window.ethereum.providers);
+  } else if (window.ethereum) {
+    providers.push(window.ethereum);
+  }
+  if (window.okxwallet && !providers.includes(window.okxwallet)) {
+    providers.push(window.okxwallet);
+  }
+  return providers;
+}
+
 export async function connectWallet(provider = getInjectedWallet()): Promise<WalletState> {
   if (!provider) throw new Error("No wallet provider was detected. Use MetaMask/OKX Wallet on desktop, or open this site inside a wallet app browser.");
-  await provider.request({ method: "eth_requestAccounts" });
-  return readWalletState(provider);
+
+  try {
+    await provider.request({ method: "eth_requestAccounts" });
+    return readWalletState(provider);
+  } catch (error) {
+    // If the preferred provider (often OKX) can't find accounts, try others.
+    if (isProviderUnavailableError(error)) {
+      const allProviders = getAllProviders().filter(p => p !== provider);
+      for (const fallback of allProviders) {
+        try {
+          await fallback.request({ method: "eth_requestAccounts" });
+          return readWalletState(fallback);
+        } catch (fallbackError) {
+          if (!isProviderUnavailableError(fallbackError)) throw fallbackError;
+        }
+      }
+      // All providers failed with account errors — no wallet is properly set up.
+      throw new Error("No wallet provider was detected. Install MetaMask or OKX Wallet, then try again.");
+    }
+    throw error;
+  }
 }
 
 export async function ensureXLayerNetwork(network: XLayerNetwork, provider = getInjectedWallet()) {
