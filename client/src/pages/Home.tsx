@@ -25,6 +25,8 @@ import {
   UserRound,
   Wallet,
   WalletCards,
+  Bot,
+  Sparkles,
 } from "lucide-react";
 import { AnalysisBoard } from "@/components/guardian/AnalysisBoard";
 import { WalletPicker } from "@/components/guardian/WalletPicker";
