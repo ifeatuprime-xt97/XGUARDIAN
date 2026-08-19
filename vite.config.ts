@@ -156,9 +156,24 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
+function vitePluginCopyBuildAssets(): Plugin {
+  return {
+    name: "copy-build-assets",
+    apply: "build",
+    closeBundle() {
+      const src = path.join(PROJECT_ROOT, "client", "public", "xlogo.png");
+      const dest = path.join(PROJECT_ROOT, "dist", "public", "xlogo.png");
+
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.copyFileSync(src, dest);
+    },
+  };
+}
+
 export default defineConfig(({ command }) => ({
   plugins: [
     tailwindcss(),
+    ...(command === "build" ? [vitePluginCopyBuildAssets()] : []),
     ...(command === "serve"
       ? [
           react(),
@@ -177,7 +192,10 @@ export default defineConfig(({ command }) => ({
   },
   envDir: path.resolve(import.meta.dirname),
   root: path.resolve(import.meta.dirname, "client"),
-  publicDir: path.resolve(import.meta.dirname, "client", "public"),
+  publicDir:
+    command === "serve"
+      ? path.resolve(import.meta.dirname, "client", "public")
+      : false,
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
