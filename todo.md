@@ -1,0 +1,106 @@
+# Project TODO
+
+- [x] Document the X Layer Guardian architecture, provider boundaries, security constraints, and verification strategy.
+- [x] Implement the runtime X Layer provider configuration module with official defaults and environment overrides for mainnet and testnet RPC URLs.
+- [x] Wire the provider configuration into the chain layer and test default and override behavior.
+- [x] Implement modular wallet, chain-provider, calldata-decoder, simulation, risk-engine, and transaction-monitoring contracts.
+- [x] Implement six deterministic, realistic Demo Mode scenarios: safe transaction, unlimited approval, transaction mismatch, failed transaction, unexpected asset movement, and successful verification.
+- [x] Build the always-visible DEMO/LIVE status control and wallet connection experience for EIP-1193 providers such as MetaMask.
+- [x] Implement deterministic transaction decoding, risk classification, asset-flow comparison, and clear security findings.
+- [x] Implement Live Mode transaction inspection, X Layer network detection and switching, RPC-backed state reads, simulation, receipt inspection, and client-side submission preparation.
+- [x] Build a responsive, security-first visual interface with prominent risk status, before/after asset movement, loading, empty, rejection, network, and failure states.
+- [x] Add and run unit tests for decoding, risk analysis, demo scenarios, and provider configuration.
+- [x] Verify the interface at desktop and mobile sizes, inspect runtime logs, and resolve presentation or runtime issues.
+- [x] Save a verified project checkpoint and provide deployment and integration notes.
+- [x] Add explicit chain-provider and transaction-monitoring adapter interfaces, inject them into simulation and receipt reads, and test substitution behavior.
+- [x] Expand calldata decoding through a pluggable selector registry while preserving the explicit opaque-call fallback.
+- [x] Make Live Mode asset-change support explicit: use available deterministic reads, identify unsupported after-state comparison, and preserve an upgrade path for trace-capable simulation providers.
+- [x] Create deployment and integration notes covering X Layer RPC configuration, provider selection, wallet/network requirements, optional reputation and trace integrations, and live asset-comparison boundaries.
+- [x] Replace the current dashboard-like visual language with a distinctive, editorial security-inspection direction.
+- [x] Rebuild the transaction review flow around a decisive verdict, a single primary consequence, and progressive evidence rather than a dense card grid.
+- [x] Redesign desktop and mobile navigation, typography, spacing, risk states, and motion for a more ownable and refined product experience.
+- [x] Re-verify the redesigned interface at desktop and mobile sizes, resolve presentation issues, and record validation results.
+- [x] Add a restrained, reduced-motion-safe interaction system for scenario changes, review-stage emphasis, and primary controls.
+- [x] Record the redesign validation results, applied fixes, responsive review findings, and remaining live-mode constraints in project documentation.
+- [x] Restart and verify the development preview after the reported service outage.
+- [x] Replace the current dossier style and serif-led typography while preserving the warm paper, ink, and guardian-green color palette.
+- [x] Rework visual hierarchy, surfaces, and component treatment into a sharper security-product interface without changing inspection functionality.
+- [x] Validate the new style system at desktop and mobile sizes and record the visual review outcome.
+- [x] Create a post-style-reset validation record covering desktop and mobile review, applied refinements, and final acceptance status.
+- [x] Replace the current dashboard-like review page with a specific transaction-decision composition that feels authored rather than assembled.
+- [x] Create a distinctive X Layer Guardian visual narrative and interaction model around an imminent signature decision, not a generic analytics layout.
+- [x] Rebuild responsive desktop and mobile structure, then validate the new composition against the existing transaction-inspection behavior.
+- [x] Remove horizontal scenario scrolling and provide stable, immediately visible case navigation on mobile, tablet, laptop, and desktop.
+- [x] Replace the theatrical interception layout with a calm premium workspace that prioritizes high-frequency review and sustained use.
+- [x] Establish a durable visual system focused on restrained craftsmanship, reading comfort, and product trust rather than decorative spectacle.
+- [x] Validate the usability-first redesign across mobile, tablet, laptop, and desktop viewports before delivery.
+- [x] Replace the current light workspace with a coherent dark, mobile-first Guardian product system inspired by the supplied reference image.
+- [x] Rebuild Guardian’s primary transaction review, case navigation, risk state, and bottom navigation around tactile dark cards and concentrated neon-green security signals.
+- [x] Adapt the dark mobile product system into a responsive desktop workspace without reintroducing dense dashboard patterns.
+- [x] Validate the reference-informed mobile and desktop designs, then document the final visual review outcome.
+- [x] Refine the dark desktop composition with an intentional full-width product surface, stronger brand lockup, and clearer consequence hierarchy.
+- [x] Capture fresh desktop and mobile verification views after the refinement and update the dark-product validation record with final findings and constraints.
+- [x] Define and implement a multi-wallet portfolio model with an active connected wallet and user-managed watch wallets.
+- [x] Replace imitation navigation with purpose-built Overview, Wallets, Scan, Activity, and Profile views.
+- [x] Give each demo security case a distinct follow-up action and outcome rather than repeating the same generic action.
+- [x] Connect live scanning to the selected active wallet and clearly separate connected signing wallets from watch-only wallet entries.
+- [x] Validate portfolio management, navigation state, scenario-specific actions, transaction tests, and responsive behavior.
+- [x] Verify Overview, Wallets, Scan, Activity, and Profile views across mobile and desktop state transitions.
+- [x] Add focused verification for scenario-action routing plus watch-only versus connected-wallet scan and signing constraints.
+- [x] Define and create a distinctive compact Guardian logo mark for the dark forensic-security product identity.
+- [x] Integrate the logo into the Guardian header, active-wallet presentation, and browser metadata without changing product behavior.
+- [x] Validate the new mark at mobile and desktop sizes and record the branding integration outcome.
+- [x] Record the Guardian logo integration outcome, including header, active-wallet card, profile, favicon, and mobile/desktop legibility findings.
+- [x] Define and generate a compact custom Guardian icon family for Overview, Wallets, Scan, Activity, Profile, safe, warning, critical, and signing states.
+- [x] Replace generic imported product icons in the primary navigation and core security surfaces with the custom Guardian icon family.
+- [x] Validate the generated icon family at mobile and desktop sizes for legibility, visual consistency, and accessible control labeling.
+- [x] Apply the supplied Guardian color tokens, typography scale, radii, flat fills, and accent-text contrast rules globally.
+- [x] Remove visible borders, gradients, and shadows from cards, inputs, buttons, navigation, and review surfaces, retaining only approved internal dividers.
+- [x] Implement solid-fill selected and unselected states, including the specified bottom-navigation behavior and network toggle treatment.
+- [x] Validate the borderless system across Overview, Wallets, Scan, Activity, and Profile at mobile and desktop sizes.
+- [x] Normalize all Guardian heading, body, label, and control typography to the supplied weights, sizes, casing, and color roles.
+- [x] Remove the self-referential accent token and inline body override, then define the final accent token cleanly in the stylesheet.
+- [x] Re-verify all portfolio surfaces on mobile and desktop after typography and token cleanup, and record the final borderless-system outcome.
+- [x] Normalize remaining control and navigation label typography to the supplied 10.5–11px label specification.
+- [x] Re-verify Overview, Wallets, Scan, Activity, and Profile at mobile and desktop sizes after the final typography pass, then record the final borderless-system outcome.
+- [x] Replace the current typeface with a more refined, legible product typography system for Guardian.
+- [x] Rebuild the mobile Overview, wallet context, review controls, and navigation composition around focused, native-feeling daily use.
+- [x] Preserve the multi-wallet portfolio, scanning, activity, and watch-only behavior while adapting desktop thoughtfully.
+- [x] Validate the type and mobile redesign at mobile and desktop sizes, then record the final review outcome.
+- [x] Confirm the saved Manrope mobile-validation record covers Overview, Wallets, Scan, Activity, and Profile before the final checkpoint.
+- [x] Replace the rejected generated icon family in Guardian navigation and visible security-state surfaces with familiar imported icons.
+- [x] Fix mobile text overflow, clipping, and low-visibility text in the active-wallet, scan form, network toggle, review state, and bottom navigation.
+- [x] Validate the imported icon and containment changes on Overview, Wallets, Scan, Activity, and Profile at mobile and desktop sizes.
+- [x] Audit the supplied X Layer transaction-safety brief against the current Guardian implementation and document remaining gaps.
+- [x] Add a server-side, evidence-bounded AI explanation layer that summarizes only deterministic transaction-analysis evidence and never controls risk or signing.
+- [x] Make X Layer context prominent in the primary flow, including active chain, official RPC-backed simulation status, gas estimate, and wallet-impact disclosure.
+- [x] Extend the transaction journey with explicit intent-versus-signature comparison, human-readable preview, post-transaction expected-versus-actual verification, and failure recovery guidance.
+- [x] Add focused tests for AI explanation boundary data, transaction mismatch clarity, and failure-recovery guidance.
+- [x] Validate the upgraded X Layer-native journey across mobile and desktop views and record the result.
+- [x] Implement a true expected-versus-actual transaction diff with explicit match, mismatch, and partial-evidence states.
+- [x] Validate Wallets and Profile at desktop size after the X Layer-native journey upgrade and record the full responsive result.
+- [x] Add X Layer ERC-20 balance and allowance reads to enrich pre- and post-transaction verification evidence without inventing unsupported state.
+- [x] Add browser-local, filterable transaction review history that preserves the existing non-custodial local-storage model.
+- [x] Simplify the primary review experience so the immediate consequence, risk decision, and one appropriate next action appear before secondary evidence.
+- [x] Add focused tests for ERC-20 evidence reads, local history filtering, and progressive review disclosure boundaries.
+- [x] Validate the streamlined review and history flow across mobile and desktop views and record the outcome.
+- [x] Add focused component tests confirming decision-first review content is primary and decoded evidence remains within the collapsed Review details disclosure for safe and recovery-required cases.
+- [x] Assert in the recovery-required review test that decoded secondary evidence appears after the closed Review details disclosure.
+- [x] Research and document X Layer-compatible sources for token metadata, logos, verified contract status, and trace-backed token deltas.
+- [x] Add token metadata contracts that distinguish self-reported on-chain fields from trusted registry or verified-contract evidence.
+- [x] Display token logos and verified contract metadata only when a trusted source supports the identity; preserve explicit fallback labels otherwise.
+- [x] Add a trace-capable provider adapter for multi-token before-and-after deltas and preserve partial/unavailable evidence states when no trace endpoint is configured.
+- [x] Extend verification comparisons to show all observed token deltas and support trace-backed expected-versus-actual outcomes.
+- [x] Add tests for metadata trust boundaries, trace-provider behavior, and multi-token verification diffs.
+- [x] Validate enriched token identity and multi-token delta details across mobile and desktop views and record the result.
+- [x] Replace the receipt-log-only observer with a real configurable trace-provider adapter that honors the X Layer trace endpoint configuration.
+- [x] Normalize configured trace responses into complete multi-token before-and-after delta evidence and label unavailable, partial, and complete trace states explicitly.
+- [x] Update expected-versus-actual verification to distinguish true trace-backed deltas from receipt-log observations and absent trace evidence.
+- [x] Add tests for no configured trace endpoint, configured but unsupported upstream responses, and complete multi-token trace evidence.
+- [x] Surface explicit Trace complete, Trace partial, and Trace unavailable labels in the verification interface.
+- [x] Constrain all trace claims to wallet-attributed standard ERC-20 transfer assets and reflect that scope in UI, tests, and documentation.
+- [x] Add regression assertions that Trace complete, Trace partial, and Trace unavailable output preserve the wallet-attributed standard ERC-20 transfer-asset scope wording.
+- [x] Replace the light browser-native active-wallet dropdown with a dark Guardian-consistent picker.
+- [x] Add regression coverage for active-wallet selection and validate the picker at mobile and desktop sizes.
+- [ ] Add an interactive WalletPicker test that opens the controlled menu and confirms choosing another wallet invokes the supplied selection callback.
+- [ ] Confirm desktop wallet switching updates the active-wallet context after choosing a different picker option.
