@@ -15,8 +15,40 @@ declare global {
   }
 }
 
+type Eip6963ProviderDetail = {
+  info?: {
+    name?: string;
+    rdns?: string;
+  };
+  provider: Eip1193Provider;
+};
+
+const announcedProviders = new Map<Eip1193Provider, Eip6963ProviderDetail["info"]>();
+let eip6963DiscoveryRequested = false;
+
+function requestAnnouncedProviders() {
+  if (
+    typeof window === "undefined" ||
+    typeof window.addEventListener !== "function" ||
+    typeof window.dispatchEvent !== "function" ||
+    eip6963DiscoveryRequested
+  )
+    return;
+  eip6963DiscoveryRequested = true;
+  window.addEventListener("eip6963:announceProvider", (event) => {
+    const detail = (event as CustomEvent<Eip6963ProviderDetail>).detail;
+    if (detail?.provider) {
+      announcedProviders.set(detail.provider, detail.info);
+    }
+  });
+  window.dispatchEvent(new Event("eip6963:requestProvider"));
+}
+
 export function getInjectedWallet(): Eip1193Provider | undefined {
   if (typeof window === "undefined") return undefined;
+  requestAnnouncedProviders();
+  const announced = [...announcedProviders.keys()];
+  if (announced.length > 0) return announced[0];
   const providers = window.ethereum?.providers;
   const okxProvider = Array.isArray(providers)
     ? providers.find((p) => "isOkxWallet" in p || "isOKExWallet" in p)
@@ -26,12 +58,49 @@ export function getInjectedWallet(): Eip1193Provider | undefined {
 
 /** Tracks whichever provider successfully connected, so all subsequent calls use the same one. */
 let activeProvider: Eip1193Provider | undefined;
+type WalletConnectProvider = Eip1193Provider & { connect: () => Promise<void> };
+let walletConnectProvider: WalletConnectProvider | undefined;
+
+async function getWalletConnectProvider(): Promise<WalletConnectProvider> {
+  if (walletConnectProvider) return walletConnectProvider;
+  const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+  if (typeof projectId !== "string" || !projectId.trim()) {
+    throw new Error(
+      "Mobile wallet connection is not configured. Set VITE_WALLETCONNECT_PROJECT_ID, or open this site inside a wallet app."
+    );
+  }
+  const { default: EthereumProvider } = await import("@walletconnect/ethereum-provider");
+  const provider = (await EthereumProvider.init({
+    projectId: projectId.trim(),
+    chains: [196],
+    optionalChains: [1952],
+    showQrModal: true,
+    qrModalOptions: { themeMode: "dark" },
+    metadata: {
+      name: "X Layer Guardian",
+      description: "Inspect X Layer transactions before signing.",
+      url: window.location.origin,
+      icons: [`${window.location.origin}/xlogo.png`],
+    },
+  })) as unknown as WalletConnectProvider;
+  walletConnectProvider = provider;
+  return provider;
+}
+
+async function connectThroughWalletConnect(): Promise<WalletState> {
+  const provider = await getWalletConnectProvider();
+  await provider.connect();
+  activeProvider = provider;
+  return readWalletState(provider);
+}
 
 export function getActiveProvider(): Eip1193Provider | undefined {
   return activeProvider ?? getInjectedWallet();
 }
 
 function providerLabel(provider: Eip1193Provider) {
+  const info = announcedProviders.get(provider);
+  if (info?.name) return info.name;
   if ("isOkxWallet" in provider || "isOKExWallet" in provider) return "OKX Wallet";
   return provider.isMetaMask ? "MetaMask" : "EIP-1193 wallet";
 }
@@ -39,7 +108,9 @@ function providerLabel(provider: Eip1193Provider) {
 /** Returns all available EIP-1193 providers in the page. */
 function getAllProviders(): Eip1193Provider[] {
   if (typeof window === "undefined") return [];
+  requestAnnouncedProviders();
   const providers: Eip1193Provider[] = [];
+  providers.push(...announcedProviders.keys());
   // Fix 5: guard Array.isArray before spreading – some wallets set providers to non-array
   if (Array.isArray(window.ethereum?.providers) && window.ethereum!.providers!.length) {
     providers.push(...window.ethereum!.providers!);
@@ -49,7 +120,7 @@ function getAllProviders(): Eip1193Provider[] {
   if (window.okxwallet && !providers.includes(window.okxwallet)) {
     providers.push(window.okxwallet);
   }
-  return providers;
+  return [...new Set(providers)];
 }
 
 /**
@@ -107,11 +178,9 @@ function isProviderUnavailableError(error: unknown): boolean {
   return false;
 }
 
-export async function connectWallet(provider = getInjectedWallet()): Promise<WalletState> {
-  if (!provider)
-    throw new Error(
-      "No wallet provider was detected. Use MetaMask/OKX Wallet on desktop, or open this site inside a wallet app browser."
-    );
+export async function connectWallet(provider?: Eip1193Provider): Promise<WalletState> {
+  const injectedProvider = provider ?? getInjectedWallet();
+  if (!injectedProvider) return connectThroughWalletConnect();
 
   const tryConnect = async (p: Eip1193Provider): Promise<WalletState> => {
     await p.request({ method: "eth_requestAccounts" });
@@ -120,10 +189,10 @@ export async function connectWallet(provider = getInjectedWallet()): Promise<Wal
   };
 
   try {
-    return await tryConnect(provider);
+    return await tryConnect(injectedProvider);
   } catch (error) {
     if (isProviderUnavailableError(error)) {
-      const allProviders = getAllProviders().filter((p) => p !== provider);
+      const allProviders = getAllProviders().filter((p) => p !== injectedProvider);
       for (const fallback of allProviders) {
         try {
           return await tryConnect(fallback);
@@ -131,9 +200,7 @@ export async function connectWallet(provider = getInjectedWallet()): Promise<Wal
           if (!isProviderUnavailableError(fallbackError)) throw fallbackError;
         }
       }
-      throw new Error(
-        "No wallet provider was detected. Install MetaMask or OKX Wallet, then try again."
-      );
+      return connectThroughWalletConnect();
     }
     throw error;
   }

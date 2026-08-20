@@ -30,7 +30,7 @@ The selector decoder likewise uses a registry rather than an execution dependenc
 
 ## Wallet and Network Requirements
 
-Live Mode requires an injected EIP-1193 wallet such as MetaMask. The user must explicitly approve account connection and, if needed, X Layer network switching. The app uses `wallet_switchEthereumChain` and only proposes `wallet_addEthereumChain` with the documented X Layer settings. Transaction submission invokes `eth_sendTransaction` from the connected browser wallet. The server has no private-key input, signer, relay, or fund-custody path.
+Live Mode uses an injected EIP-1193 wallet such as MetaMask when one is available. In mobile browsers without an injected provider, it falls back to WalletConnect's QR and mobile deep-link modal when `VITE_WALLETCONNECT_PROJECT_ID` is configured. The user must explicitly approve account connection and, if needed, X Layer network switching. The app uses `wallet_switchEthereumChain` and only proposes `wallet_addEthereumChain` with the documented X Layer settings. Transaction submission invokes `eth_sendTransaction` from the connected browser wallet. The server has no private-key input, signer, relay, or fund-custody path.
 
 > A successful dry run is not a trust guarantee. It reports the selected provider’s read-only result against current state; users must still review decoded permissions, destination, asset effects, and deterministic findings before signing.
 

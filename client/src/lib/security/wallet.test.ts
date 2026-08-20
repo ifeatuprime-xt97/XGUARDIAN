@@ -44,4 +44,28 @@ describe("browser wallet account discovery", () => {
     expect(getInjectedWallet()).toBe(okx);
     await expect(readWalletState()).resolves.toMatchObject({ providerLabel: "OKX Wallet" });
   });
+
+  it("discovers wallets announced through EIP-6963", async () => {
+    const mobileWallet = providerWith(["0x3333333333333333333333333333333333333333"]);
+    const listeners = new Map<string, EventListener>();
+    const windowMock = {
+      addEventListener: (type: string, listener: EventListener) => listeners.set(type, listener),
+      dispatchEvent: (event: Event) => {
+        if (event.type === "eip6963:requestProvider") {
+          listeners.get("eip6963:announceProvider")?.({
+            type: "eip6963:announceProvider",
+            detail: { provider: mobileWallet, info: { name: "Mobile Wallet" } },
+          } as CustomEvent);
+        }
+        return true;
+      },
+    };
+    vi.stubGlobal("window", windowMock);
+
+    expect(getInjectedWallet()).toBe(mobileWallet);
+    await expect(readWalletState()).resolves.toMatchObject({
+      connected: true,
+      providerLabel: "Mobile Wallet",
+    });
+  });
 });
